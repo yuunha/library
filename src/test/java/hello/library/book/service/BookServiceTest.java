@@ -1,0 +1,235 @@
+package hello.library.book.service;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.*;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.NoSuchElementException;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+import hello.library.book.dto.BookRequest;
+import hello.library.book.entity.Book;
+import hello.library.book.repository.BookRepository;
+import jakarta.transaction.Transactional;
+
+@SpringBootTest
+@Transactional
+@ActiveProfiles("test")
+public class BookServiceTest {
+
+	@Autowired
+	private BookService bookService;
+
+	@Autowired
+	private BookRepository bookRepository;
+
+	@BeforeEach
+	void setUp() {
+		bookRepository.save(Book.builder()
+			.bookName("모모")
+			.author("미하엘 엔데")
+			.isbn("1111111111111")
+			.publisher("비룡소")
+			.publicationDate(LocalDate.of(2000, 1, 1))
+			.category("소설")
+			.pages(300)
+			.build());
+
+		bookRepository.save(Book.builder()
+			.bookName("모든 순간이 너였다")
+			.author("하태완")
+			.isbn("2222222222222")
+			.publisher("위즈덤하우스")
+			.publicationDate(LocalDate.of(2018, 2, 5))
+			.category("에세이")
+			.pages(250)
+			.build());
+	}
+
+	@Test
+	@DisplayName("책 등록 성공 - 모든 필드 들어옴")
+	public void BookRegisterSuccess1() {
+		BookRequest request = BookRequest.builder()
+			.bookName("나미야 잡화점의 기적")
+			.author("히가시노 게이고")
+			.publisher("현대문학")
+			.publicationDate(LocalDate.of(2020, 5, 1))
+			.isbn("9781234567890")
+			.category("소설")
+			.pages(400)
+			.build();
+
+		// when
+		Book savedBook = bookService.registerBook(request);
+
+		// then
+		assertThat(savedBook.getBookId()).isNotNull();
+		assertThat(savedBook.getBookName()).isEqualTo("나미야 잡화점의 기적");
+		assertThat(bookRepository.findById(savedBook.getBookId())).isPresent();
+	}
+	@Test
+	@DisplayName("책 등록 성공 - 필수 필드만 들어옴")
+	public void BookRegisterSuccess2() {
+		BookRequest request = BookRequest.builder()
+			.bookName("산책")
+			.author("김영하")
+			.isbn("9788901234567")
+			.build();
+
+		// when
+		Book savedBook = bookService.registerBook(request);
+
+		// then
+		assertThat(savedBook.getBookId()).isNotNull();
+		assertThat(savedBook.getBookName()).isEqualTo("산책");
+		assertThat(savedBook.getIsbn()).isEqualTo("9788901234567");
+		assertThat(bookRepository.findById(savedBook.getBookId())).isPresent();
+	}
+	@Test
+	@DisplayName("책 등록 실패 - 이미 존재하는 책 등록(isbn 동일)")
+	public void BookRegisterFail1() {
+		//given
+		BookRequest preRequest = BookRequest.builder()
+			.bookName("산")
+			.author("김영")
+			.isbn("9788901234567")
+			.build();
+		bookService.registerBook(preRequest);
+
+		BookRequest duplicateRequest = BookRequest.builder()
+			.bookName("산책")
+			.author("김영하")
+			.isbn("9788901234567")
+			.build();
+
+
+		// then
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			bookService.registerBook(duplicateRequest); //when
+		});
+	}
+	@Test
+	@DisplayName("책 등록 실패 - 필수 필드 안들어옴")
+	public void BookRegisterFail2() {
+		//given
+		BookRequest request1 = BookRequest.builder()
+			.author("김영하")
+			.isbn("9788901234561")
+			.build();
+		BookRequest request2 = BookRequest.builder()
+			.bookName("산책")
+			.author("김영하")
+			.build();
+		// then
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			bookService.registerBook(request1);; //when
+		});
+		// then
+		assertThrows(DataIntegrityViolationException.class, () -> {
+			bookService.registerBook(request2);; //when
+		});
+	}
+
+	//책 삭
+	@Test
+	@DisplayName("책 삭제 성공 - 존재하는 책 ISBN으로 삭제")
+	void deleteBookSuccess() {
+		// given
+		Book book = Book.builder()
+			.bookName("테스트책")
+			.author("저자")
+			.publisher("출판사")
+			.publicationDate(LocalDate.now())
+			.isbn("9781234567890")
+			.category("소설")
+			.pages(200)
+			.build();
+		bookRepository.save(book);
+
+		// when
+		bookService.deleteByIsbn("9781234567890");
+
+		// then
+		assertThat(bookRepository.findByIsbn("9781234567890")).isEmpty();
+	}
+
+	@Test
+	@DisplayName("책 삭제 실패 - 존재하지 않는 ISBN")
+	void deleteBookFail() {
+		// given
+		String nonExistentIsbn = "0000000000000";
+
+		// expect
+		assertThatThrownBy(() -> bookService.deleteByIsbn(nonExistentIsbn))
+			.isInstanceOf(NoSuchElementException.class)
+			.hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
+	}
+	@Test
+	@DisplayName("책 조회 성공 - ISBN으로 조회")
+	void getBookByIsbn_success() {
+		// given
+		Book book = Book.builder()
+			.bookName("모모")
+			.author("미하엘 엔데")
+			.publisher("비룡소")
+			.publicationDate(LocalDate.of(2000, 5, 1))
+			.isbn("9781234567890")
+			.category("소설")
+			.pages(300)
+			.build();
+		bookRepository.save(book);
+
+		// when
+		Book foundBook = bookService.getBookByIsbn("9781234567890");
+
+		// then
+		assertThat(foundBook).isNotNull();
+		assertThat(foundBook.getBookName()).isEqualTo("모모");
+		assertThat(foundBook.getIsbn()).isEqualTo("9781234567890");
+	}
+
+	@Test
+	@DisplayName("책 조회 실패 - 존재하지 않는 ISBN")
+	void getBookByIsbn_fail() {
+		// given
+		String nonExistentIsbn = "0000000000000";
+
+		// expect
+		assertThatThrownBy(() -> bookService.getBookByIsbn(nonExistentIsbn))
+			.isInstanceOf(NoSuchElementException.class)
+			.hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
+	}
+	@Test
+	@DisplayName("모든 책 조회")
+	void getAllBooks() {
+		List<Book> books = bookService.getAllBooks();
+		assertThat(books).hasSize(2);
+	}
+
+	@Test
+	@DisplayName("책 제목으로 검색 - 키워드 포함")
+	void searchBooksByTitle_keyword() {
+		List<Book> result = bookService.searchBooksByTitle("모");
+
+		assertThat(result).hasSize(2);
+		assertThat(result).extracting(Book::getBookName)
+			.contains("모모", "모든 순간이 너였다");
+	}
+
+	@Test
+	@DisplayName("책 제목으로 검색 - 키워드 불일치")
+	void searchBooksByTitle_noMatch() {
+		List<Book> result = bookService.searchBooksByTitle("없는책");
+
+		assertThat(result).isEmpty();
+	}
+}
