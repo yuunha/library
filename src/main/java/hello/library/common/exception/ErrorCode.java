@@ -7,7 +7,8 @@ import lombok.Getter;
 
 @Getter
 public enum ErrorCode {
-	BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-001", "도서를 찾을 수 없습니다.");
+	BOOK_NOT_FOUND(HttpStatus.NOT_FOUND, "BOOK-001", "도서를 찾을 수 없습니다."),
+	DUPLICATE_ISBN(HttpStatus.BAD_REQUEST, "BOOK-002", "이미 존재하는 ISBN입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String errorCode;

@@ -14,11 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.web.bind.MethodArgumentNotValidException;
-
 import hello.library.book.dto.BookRequest;
 import hello.library.book.entity.Book;
 import hello.library.book.repository.BookRepository;
+import hello.library.common.exception.BusinessException;
 import jakarta.transaction.Transactional;
 
 @SpringBootTest
@@ -34,6 +33,9 @@ public class BookServiceTest {
 
 	@BeforeEach
 	void setUp() {
+		bookRepository.deleteAll();
+	}
+	void registerBook() {
 		bookRepository.save(Book.builder()
 			.bookName("모모")
 			.author("미하엘 엔데")
@@ -42,16 +44,6 @@ public class BookServiceTest {
 			.publicationDate(LocalDate.of(2000, 1, 1))
 			.category("소설")
 			.pages(300)
-			.build());
-
-		bookRepository.save(Book.builder()
-			.bookName("모든 순간이 너였다")
-			.author("하태완")
-			.isbn("2222222222222")
-			.publisher("위즈덤하우스")
-			.publicationDate(LocalDate.of(2018, 2, 5))
-			.category("에세이")
-			.pages(250)
 			.build());
 	}
 
@@ -98,24 +90,22 @@ public class BookServiceTest {
 	@DisplayName("책 등록 실패 - 이미 존재하는 책 등록(isbn 동일)")
 	public void BookRegisterFail1() {
 		//given
-		BookRequest preRequest = BookRequest.builder()
-			.bookName("산")
-			.author("김영")
-			.isbn("9788901234567")
+		registerBook();
+
+		BookRequest duplicateBookRequest = BookRequest.builder()
+			.bookName("모모")
+			.author("미하엘 엔데")
+			.isbn("1111111111111")
+			.publisher("비룡소")
+			.publicationDate(LocalDate.of(2000, 1, 1))
+			.category("소설")
+			.pages(300)
 			.build();
-		bookService.registerBook(preRequest);
-
-		BookRequest duplicateRequest = BookRequest.builder()
-			.bookName("산책")
-			.author("김영하")
-			.isbn("9788901234567")
-			.build();
 
 
-		// then
-		assertThrows(DataIntegrityViolationException.class, () -> {
-			bookService.registerBook(duplicateRequest); //when
-		});
+		assertThatThrownBy(() -> bookService.registerBook(duplicateBookRequest))
+			.isInstanceOf(BusinessException.class)
+			.hasMessage("이미 존재하는 책입니다.(ISBN중복)");
 	}
 	@Test
 	@DisplayName("책 등록 실패 - 필수 필드 안들어옴")
@@ -139,9 +129,9 @@ public class BookServiceTest {
 		});
 	}
 
-	//책 삭
+	//책 삭제
 	@Test
-	@DisplayName("책 삭제 성공 - 존재하는 책 ISBN으로 삭제")
+	@DisplayName("책 삭제 성공 by Id")
 	void deleteBookSuccess() {
 		// given
 		Book book = Book.builder()
@@ -153,25 +143,22 @@ public class BookServiceTest {
 			.category("소설")
 			.pages(200)
 			.build();
-		bookRepository.save(book);
+		Book savedBook= bookRepository.save(book);
 
 		// when
-		bookService.deleteByIsbn("9781234567890");
+		bookService.deleteBookById(savedBook.getBookId());
 
 		// then
-		assertThat(bookRepository.findByIsbn("9781234567890")).isEmpty();
+		assertThat(bookRepository.findById(savedBook.getBookId())).isEmpty();
 	}
 
 	@Test
-	@DisplayName("책 삭제 실패 - 존재하지 않는 ISBN")
+	@DisplayName("책 삭제 실패 - 존재하지 않는 Id")
 	void deleteBookFail() {
-		// given
-		String nonExistentIsbn = "0000000000000";
+		assertThatThrownBy(() -> bookService.deleteBookById(1L))
+			.isInstanceOf(BusinessException.class)
+			.hasMessage("해당 isbn을 가진 책이 존재하지 않습니다.");
 
-		// expect
-		assertThatThrownBy(() -> bookService.deleteByIsbn(nonExistentIsbn))
-			.isInstanceOf(NoSuchElementException.class)
-			.hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
 	}
 	@Test
 	@DisplayName("책 조회 성공 - ISBN으로 조회")
@@ -186,10 +173,10 @@ public class BookServiceTest {
 			.category("소설")
 			.pages(300)
 			.build();
-		bookRepository.save(book);
+		Book savedBook = bookRepository.save(book);
 
 		// when
-		Book foundBook = bookService.getBookByIsbn("9781234567890");
+		Book foundBook = bookService.getBookById(savedBook.getBookId());
 
 		// then
 		assertThat(foundBook).isNotNull();
@@ -198,13 +185,11 @@ public class BookServiceTest {
 	}
 
 	@Test
-	@DisplayName("책 조회 실패 - 존재하지 않는 ISBN")
+	@DisplayName("책 조회 실패 - 존재하지 않는 Id")
 	void getBookByIsbn_fail() {
-		// given
-		String nonExistentIsbn = "0000000000000";
 
 		// expect
-		assertThatThrownBy(() -> bookService.getBookByIsbn(nonExistentIsbn))
+		assertThatThrownBy(() -> bookService.getBookById(1L))
 			.isInstanceOf(NoSuchElementException.class)
 			.hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
 	}
@@ -212,15 +197,17 @@ public class BookServiceTest {
 	@DisplayName("모든 책 조회")
 	void getAllBooks() {
 		List<Book> books = bookService.getAllBooks();
-		assertThat(books).hasSize(2);
+		assertThat(books).hasSize(1);
 	}
 
 	@Test
 	@DisplayName("책 제목으로 검색 - 키워드 포함")
 	void searchBooksByTitle_keyword() {
+		registerBook();
+
 		List<Book> result = bookService.searchBooksByTitle("모");
 
-		assertThat(result).hasSize(2);
+		assertThat(result).hasSize(1);
 		assertThat(result).extracting(Book::getBookName)
 			.contains("모모", "모든 순간이 너였다");
 	}
@@ -228,6 +215,8 @@ public class BookServiceTest {
 	@Test
 	@DisplayName("책 제목으로 검색 - 키워드 불일치")
 	void searchBooksByTitle_noMatch() {
+		registerBook();
+
 		List<Book> result = bookService.searchBooksByTitle("없는책");
 
 		assertThat(result).isEmpty();

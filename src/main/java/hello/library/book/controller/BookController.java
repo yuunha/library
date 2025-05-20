@@ -32,7 +32,7 @@ public class BookController {
 
 	@DeleteMapping
 	public ResponseEntity<Void> deleteBook(@RequestParam("bookId") long id) {
-		bookService.deleteById(id);
+		bookService.deleteBookById(id);
 		return ResponseEntity.noContent().build();
 	}
 
