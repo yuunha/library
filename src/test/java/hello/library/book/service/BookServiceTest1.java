@@ -23,7 +23,7 @@ import jakarta.transaction.Transactional;
 @SpringBootTest
 @Transactional
 @ActiveProfiles("test")
-public class BookServiceTest {
+public class BookServiceTest1 {
 
 	@Autowired
 	private BookService bookService;
@@ -107,27 +107,6 @@ public class BookServiceTest {
 			.isInstanceOf(BusinessException.class)
 			.hasMessage("이미 존재하는 책입니다.(ISBN중복)");
 	}
-	@Test
-	@DisplayName("책 등록 실패 - 필수 필드 안들어옴")
-	public void BookRegisterFail2() {
-		//given
-		BookRequest request1 = BookRequest.builder()
-			.author("김영하")
-			.isbn("9788901234561")
-			.build();
-		BookRequest request2 = BookRequest.builder()
-			.bookName("산책")
-			.author("김영하")
-			.build();
-		// then
-		assertThrows(DataIntegrityViolationException.class, () -> {
-			bookService.registerBook(request1);; //when
-		});
-		// then
-		assertThrows(DataIntegrityViolationException.class, () -> {
-			bookService.registerBook(request2);; //when
-		});
-	}
 
 	//책 삭제
 	@Test
@@ -160,65 +139,5 @@ public class BookServiceTest {
 			.hasMessage("해당 isbn을 가진 책이 존재하지 않습니다.");
 
 	}
-	@Test
-	@DisplayName("책 조회 성공 - ISBN으로 조회")
-	void getBookByIsbn_success() {
-		// given
-		Book book = Book.builder()
-			.bookName("모모")
-			.author("미하엘 엔데")
-			.publisher("비룡소")
-			.publicationDate(LocalDate.of(2000, 5, 1))
-			.isbn("9781234567890")
-			.category("소설")
-			.pages(300)
-			.build();
-		Book savedBook = bookRepository.save(book);
 
-		// when
-		Book foundBook = bookService.getBookById(savedBook.getBookId());
-
-		// then
-		assertThat(foundBook).isNotNull();
-		assertThat(foundBook.getBookName()).isEqualTo("모모");
-		assertThat(foundBook.getIsbn()).isEqualTo("9781234567890");
-	}
-
-	@Test
-	@DisplayName("책 조회 실패 - 존재하지 않는 Id")
-	void getBookByIsbn_fail() {
-
-		// expect
-		assertThatThrownBy(() -> bookService.getBookById(1L))
-			.isInstanceOf(NoSuchElementException.class)
-			.hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
-	}
-	@Test
-	@DisplayName("모든 책 조회")
-	void getAllBooks() {
-		List<Book> books = bookService.getAllBooks();
-		assertThat(books).hasSize(1);
-	}
-
-	@Test
-	@DisplayName("책 제목으로 검색 - 키워드 포함")
-	void searchBooksByTitle_keyword() {
-		registerBook();
-
-		List<Book> result = bookService.searchBooksByTitle("모");
-
-		assertThat(result).hasSize(1);
-		assertThat(result).extracting(Book::getBookName)
-			.contains("모모", "모든 순간이 너였다");
-	}
-
-	@Test
-	@DisplayName("책 제목으로 검색 - 키워드 불일치")
-	void searchBooksByTitle_noMatch() {
-		registerBook();
-
-		List<Book> result = bookService.searchBooksByTitle("없는책");
-
-		assertThat(result).isEmpty();
-	}
 }

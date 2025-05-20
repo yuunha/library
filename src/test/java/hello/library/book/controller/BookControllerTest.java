@@ -45,7 +45,7 @@ public class BookControllerTest {
 	}
 
 	@Test
-	@DisplayName("책 등록 - 성공")
+	@DisplayName("책 등록 성공")
 	void registerBook_success() throws Exception {
 		// given
 		BookRequest request = BookRequest.builder()
@@ -73,7 +73,7 @@ public class BookControllerTest {
 	}
 
 	@Test
-	@DisplayName("책 등록 - 실패(동일한 isbn)")
+	@DisplayName("책 등록 실패 - 동일한 isbn")
 	void registerBook_fail() throws Exception {
 		// given
 		BookRequest request = BookRequest.builder()
@@ -96,8 +96,44 @@ public class BookControllerTest {
 			.andExpect(jsonPath("$.errorCode").value("BOOK-002"));
 
 	}
+
 	@Test
-	@DisplayName("책 삭제 by BookId -성공")
+	@DisplayName("책 등록 실패 - 필수 필드 누락")
+	void registerBook_fail2() throws Exception {
+		BookRequest request1 = BookRequest.builder()
+			.bookName("모모")
+			.author("미하엘 엔데")
+			.publisher("비룡소")
+			.publicationDate(LocalDate.of(2000, 1, 1))
+			.category("소설")
+			.pages(300)
+			.build();
+		// when & then
+		mockMvc.perform(post("/book")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request1)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.isbn").value("ISBN은 필수입니다."));
+
+		BookRequest request2 = BookRequest.builder()
+			.author("미하엘 엔데")
+			.publisher("비룡소")
+			.publicationDate(LocalDate.of(2000, 1, 1))
+			.category("소설")
+			.isbn("9781234567890")
+			.pages(300)
+			.build();
+		// when & then
+		mockMvc.perform(post("/book")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request2)))
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.bookName").value("책 이름은 필수입니다."));
+	}
+
+
+	@Test
+	@DisplayName("책 삭제 by BookId 성공")
 	void deleteBook_success() throws Exception {
 		// given
 		BookRequest request = BookRequest.builder()
@@ -119,7 +155,7 @@ public class BookControllerTest {
 			.andExpect(status().isNoContent());
 	}
 	@Test
-	@DisplayName("책 삭제 - 실패 (존재하지 않는 bookId)")
+	@DisplayName("책 삭제 실패 - 존재하지 않는 bookId)")
 	void deleteBook_fail() throws Exception {
 		// when & then
 		mockMvc.perform(delete("/book")
