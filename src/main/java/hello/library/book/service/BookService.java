@@ -38,10 +38,20 @@ public class BookService {
 			.orElseThrow(() -> new NoSuchElementException("해당 ISBN의 책이 존재하지 않습니다."));
 		bookRepository.delete(book);
 	}
+	@Transactional
+	public void deleteById(long id) {
+		Book book = bookRepository.findById(id)
+			.orElseThrow(() -> new NoSuchElementException("해당 id의 책이 존재하지 않습니다."));
+		bookRepository.delete(book);
+	}
 
 	public Book getBookByIsbn(String isbn) {
 		return bookRepository.findByIsbn(isbn)
 			.orElseThrow(() -> new NoSuchElementException("해당 ISBN의 책이 존재하지 않습니다."));
+	}
+	public Book getBookById(long id) {
+		return bookRepository.findById(id)
+			.orElseThrow(() -> new NoSuchElementException("해당 id의 책이 존재하지 않습니다."));
 	}
 	// 모든 책 조회
 	public List<Book> getAllBooks() {
@@ -52,4 +62,6 @@ public class BookService {
 	public List<Book> searchBooksByTitle(String keyword) {
 		return bookRepository.findByBookNameContainingIgnoreCase(keyword);
 	}
+
+
 }
