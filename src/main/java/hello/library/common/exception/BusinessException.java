@@ -13,7 +13,7 @@ public class BusinessException extends RuntimeException {
 	}
 
 	public BusinessException(ErrorCode errorCode, String message) {
-		super(message);
+		super(message); //부모 클래스의 생성자 호출
 		this.errorCode = errorCode;
 	}
 }
