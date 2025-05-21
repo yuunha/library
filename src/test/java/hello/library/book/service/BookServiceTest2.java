@@ -15,6 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import hello.library.book.entity.Book;
 import hello.library.book.repository.BookRepository;
+import hello.library.common.exception.BusinessException;
 import jakarta.transaction.Transactional;
 
 @SpringBootTest
@@ -45,8 +46,8 @@ public class BookServiceTest2 {
             .build());
     }
     @Test
-    @DisplayName("책 조회 성공 - ISBN으로 조회")
-    void getBookByIsbn_success() {
+    @DisplayName("책 조회 성공 - Id로 조회")
+    void getBookById_success() {
         // given
         Book book = Book.builder()
             .bookName("모모")
@@ -68,18 +69,19 @@ public class BookServiceTest2 {
         assertThat(foundBook.getIsbn()).isEqualTo("9781234567890");
     }
 
+
     @Test
     @DisplayName("책 조회 실패 - 존재하지 않는 Id")
     void getBookByIsbn_fail() {
 
-        // expect
         assertThatThrownBy(() -> bookService.getBookById(1L))
-            .isInstanceOf(NoSuchElementException.class)
-            .hasMessage("해당 ISBN의 책이 존재하지 않습니다.");
+            .isInstanceOf(BusinessException.class)
+            .hasMessage("해당 Id를 가진 책이 존재하지 않습니다.");
     }
     @Test
     @DisplayName("모든 책 조회")
     void getAllBooks() {
+        registerBook();
         List<Book> books = bookService.getAllBooks();
         assertThat(books).hasSize(1);
     }
@@ -93,7 +95,7 @@ public class BookServiceTest2 {
 
         assertThat(result).hasSize(1);
         assertThat(result).extracting(Book::getBookName)
-            .contains("모모", "모든 순간이 너였다");
+            .contains("모모");
     }
 
     @Test

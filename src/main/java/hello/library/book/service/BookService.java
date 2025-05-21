@@ -40,12 +40,6 @@ public class BookService {
 		return bookRepository.save(book);
 	}
 
-	// @Transactional
-	// public void deleteByIsbn(String isbn) {
-	// 	Book book = bookRepository.findByIsbn(isbn)
-	// 		.orElseThrow(() -> new BusinessException(ErrorCode.BOOK_NOT_FOUND,"해당 isbn을 가진 책이 존재하지 않습니다."));
-	// 	bookRepository.delete(book);
-	// }
 	@Transactional
 	public void deleteBookById(long id) {
 		Book book = bookRepository.findById(id)
@@ -53,10 +47,7 @@ public class BookService {
 		bookRepository.delete(book);
 	}
 
-	// public Book getBookByIsbn(String isbn) {
-	// 	return bookRepository.findByIsbn(isbn)
-	// 		.orElseThrow(() -> new BusinessException(ErrorCode.BOOK_NOT_FOUND,"해당 ISBN을 가진 책이 존재하지 않습니다."));
-	// }
+
 	public Book getBookById(long id) {
 		return bookRepository.findById(id)
 			.orElseThrow(() -> new BusinessException(ErrorCode.BOOK_NOT_FOUND,"해당 Id를 가진 책이 존재하지 않습니다."));

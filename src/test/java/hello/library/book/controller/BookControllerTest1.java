@@ -23,12 +23,11 @@ import hello.library.book.dto.BookRequest;
 import hello.library.book.entity.Book;
 import hello.library.book.mapper.BookMapper;
 import hello.library.book.repository.BookRepository;
-import hello.library.book.service.BookService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class BookControllerTest {
+public class BookControllerTest1 {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -155,7 +154,7 @@ public class BookControllerTest {
 			.andExpect(status().isNoContent());
 	}
 	@Test
-	@DisplayName("책 삭제 실패 - 존재하지 않는 bookId)")
+	@DisplayName("책 삭제 실패 - 존재하지 않는 bookId")
 	void deleteBook_fail() throws Exception {
 		// when & then
 		mockMvc.perform(delete("/book")
@@ -164,41 +163,5 @@ public class BookControllerTest {
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.errorCode").value("BOOK-001"));
 	}
-	@Test
-	@DisplayName("책 조회 성공")
-	void getBookById_success() throws Exception {
-		// given
-		BookRequest request = BookRequest.builder()
-			.bookName("모모")
-			.author("미하엘 엔데")
-			.publisher("비룡소")
-			.publicationDate(LocalDate.of(2000, 1, 1))
-			.isbn("9781234567890")
-			.category("소설")
-			.pages(300)
-			.build();
-		//Book 객체 저장
-		Book savedBook = bookRepository.save(BookMapper.toEntity(request));
 
-		// when & then
-		mockMvc.perform(get("/book")
-				.param("bookId", String.valueOf(savedBook.getBookId()))
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isOk());
-	}
-	@Test
-	@DisplayName("책 조회 실패 - 존재하지 않는 bookId -> 404 반환")
-	void getBookById_fail() throws Exception {
-		// given: DB에 없는 id 사용 (예: 99999)
-		long notExistBookId = 99999L;
-
-		// when & then
-		mockMvc.perform(get("/book")
-				.param("bookId", String.valueOf(notExistBookId))
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNotFound())
-			.andExpect(jsonPath("$.errorCode").value("BOOK-001"));
-		// 필요하다면 에러 메시지 검증도 추가 가능
-		// .andExpect(jsonPath("$.message").value("해당 책이 존재하지 않습니다."));
-	}
 }

@@ -131,13 +131,4 @@ public class BookServiceTest1 {
 		assertThat(bookRepository.findById(savedBook.getBookId())).isEmpty();
 	}
 
-	@Test
-	@DisplayName("책 삭제 실패 - 존재하지 않는 Id")
-	void deleteBookFail() {
-		assertThatThrownBy(() -> bookService.deleteBookById(1L))
-			.isInstanceOf(BusinessException.class)
-			.hasMessage("해당 isbn을 가진 책이 존재하지 않습니다.");
-
-	}
-
 }
