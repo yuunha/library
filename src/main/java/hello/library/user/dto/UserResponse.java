@@ -1,5 +1,7 @@
 package hello.library.user.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -12,7 +14,8 @@ import lombok.Setter;
 @AllArgsConstructor
 @Builder
 public class UserResponse {
-    private Long userId; //null 허용
+
+    private Long userId;
 
     private String username;
 

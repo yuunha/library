@@ -1,5 +1,6 @@
 package hello.library.user.entity;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -18,14 +19,16 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "user")
+@Table(name = "users")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId; //null 허용
 
+    @Column(nullable = false)
     private String username;
 
+    @Column(nullable = false, unique = true)
     private String email;
 
     // Optional: 연체 상태 캐시용 필드 (비즈니스 필요시)
