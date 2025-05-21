@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import hello.library.book.dto.BookRequest;
 import hello.library.book.entity.Book;
+import hello.library.book.mapper.BookMapper;
 import hello.library.book.repository.BookRepository;
 import hello.library.common.exception.BusinessException;
 import hello.library.common.exception.ErrorCode;
@@ -27,15 +28,7 @@ public class BookService {
 			throw new BusinessException(ErrorCode.DUPLICATE_ISBN, "이미 존재하는 책입니다.(ISBN중복)");
 		}
 
-		Book book = Book.builder()
-			.bookName(request.getBookName())
-			.author(request.getAuthor())
-			.publisher(request.getPublisher())
-			.publicationDate(request.getPublicationDate())
-			.isbn(request.getIsbn())
-			.category(request.getCategory())
-			.pages(request.getPages())
-			.build();
+		Book book = BookMapper.toEntity(request);
 
 		return bookRepository.save(book);
 	}
