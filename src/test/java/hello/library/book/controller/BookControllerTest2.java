@@ -57,9 +57,9 @@ public class BookControllerTest2 {
         //Book 객체 저장
         Book savedBook = bookRepository.save(BookMapper.toEntity(request));
 
+        Long bookId= savedBook.getBookId();
         // when & then
-        mockMvc.perform(get("/book")
-                .param("bookId", String.valueOf(savedBook.getBookId()))
+        mockMvc.perform(get("/book/"+bookId)
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.bookId").value(savedBook.getBookId()))
@@ -75,11 +75,9 @@ public class BookControllerTest2 {
     @DisplayName("책 조회 실패 - 존재하지 않는 bookId -> 404 반환")
     void getBookById_fail() throws Exception {
         // given: DB에 없는 id 사용 (예: 99999)
-        long notExistBookId = 99999L;
-
+        Long bookId = 1L;
         // when & then
-        mockMvc.perform(get("/book")
-                .param("bookId", String.valueOf(notExistBookId))
+        mockMvc.perform(get("/book/" + bookId )
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.errorCode").value("BOOK-001"));

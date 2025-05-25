@@ -61,14 +61,17 @@ public class BookControllerTest1 {
 		mockMvc.perform(post("/book")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isCreated())
-			.andExpect(jsonPath("$.bookName").value("모모"))
-			.andExpect(jsonPath("$.author").value("미하엘 엔데"));
+			.andExpect(status().isCreated());
 
 		// DB에 저장됐는지 검증
 		List<Book> books = bookRepository.findAll();
 		assertThat(books).hasSize(1);
 		assertThat(books.get(0).getIsbn()).isEqualTo("9781234567890");
+		assertThat(books.get(0).getBookName()).isEqualTo("모모");
+		assertThat(books.get(0).getAuthor()).isEqualTo("미하엘 엔데");
+		assertThat(books.get(0).getPublisher()).isEqualTo("비룡소");
+		assertThat(books.get(0).getPublicationDate()).isEqualTo(LocalDate.of(2000, 1, 1));
+
 	}
 
 	@Test
@@ -147,18 +150,19 @@ public class BookControllerTest1 {
 		//Book 객체 저장
 		Book savedBook = bookRepository.save(BookMapper.toEntity(request));
 
+		Long bookId = savedBook.getBookId();
+
 		// when & then
-		mockMvc.perform(delete("/book")
-				.param("bookId", String.valueOf(savedBook.getBookId()))
-				.contentType(MediaType.APPLICATION_JSON))
-			.andExpect(status().isNoContent());
+			mockMvc.perform(delete("/book/" + bookId)
+					.contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isNoContent());
 	}
+
 	@Test
 	@DisplayName("책 삭제 실패 - 존재하지 않는 bookId")
 	void deleteBook_fail() throws Exception {
 		// when & then
-		mockMvc.perform(delete("/book")
-				.param("bookId", String.valueOf(1L))
+		mockMvc.perform(delete("/book/1")
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isNotFound())
 			.andExpect(jsonPath("$.errorCode").value("BOOK-001"));
