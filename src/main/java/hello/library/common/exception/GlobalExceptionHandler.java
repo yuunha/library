@@ -38,6 +38,7 @@ public class GlobalExceptionHandler {
 	}
 
 	//데이터 무결성 등 db관련 예외
+	//TODO : db 예외 처리 로직 수정 필요
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<ErrorDetails> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
 		String message = ex.getMostSpecificCause().getMessage();

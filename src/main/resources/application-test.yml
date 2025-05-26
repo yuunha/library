@@ -1,3 +1,5 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:db_test;MODE=MySQL
+    url: jdbc:h2:mem:db_test;MODE=MySQL #메모리 기반 -> 테스트 실행 시점에만 존재하고 jvm이 꺼지면 DB도 사라짐.
+                                        #항상 깨끗한 상태/ 매 메서드 마다 항상 id가 1부터 시작
+                                        #테스트를 한번에 실행시키면 applicationContent 공유함(DB도 공유). id가 1부터시작 보장 X

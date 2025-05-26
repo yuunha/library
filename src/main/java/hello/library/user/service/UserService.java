@@ -17,6 +17,9 @@ public class UserService {
     private final UserRepository userRepository;
 
     public long registerUser(UserRequest request) {
+        if(userRepository.existsByEmail(request.getEmail())) {
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL , "이미 존재하는 email입니다.");
+        }
         User user = UserMapper.toEntity(request);
         return userRepository.save(user).getUserId();
     }
@@ -25,6 +28,15 @@ public class UserService {
         if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
         }else{
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+    }
+
+    public User getUserById(long id) {
+        if(userRepository.existsById(id)) {
+            return userRepository.findById(id).get();
+        }
+        else{
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
     }

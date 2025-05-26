@@ -7,6 +7,8 @@ public class BusinessException extends RuntimeException {
 
 	private final ErrorCode errorCode;
 
+	//message 필드 상속됨
+
 	public BusinessException(ErrorCode errorCode) {
 		super(errorCode.getMessage());
 		this.errorCode = errorCode;
