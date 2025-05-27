@@ -1,5 +1,9 @@
 package hello.library.loan.entity;
 
+import java.time.LocalDate;
+
+import org.springframework.data.annotation.CreatedDate;
+
 import hello.library.book.entity.Book;
 import hello.library.user.entity.User;
 import jakarta.persistence.Entity;
@@ -35,4 +39,12 @@ public class Loan {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
+
+    @CreatedDate
+    private LocalDate loanDate;//대출일
+
+    private LocalDate dueDate;//반납 예정일
+
+    private LocalDate returnDate;//반납일
+
 }

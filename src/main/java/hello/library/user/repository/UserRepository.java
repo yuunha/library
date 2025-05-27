@@ -7,5 +7,4 @@ import hello.library.user.entity.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
-    User getUsersByUserId(long id);
 }
