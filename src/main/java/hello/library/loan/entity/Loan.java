@@ -40,11 +40,20 @@ public class Loan {
     @JoinColumn(name = "book_id", nullable = false)
     private Book book;
 
-    @CreatedDate
     private LocalDate loanDate;//대출일
 
     private LocalDate dueDate;//반납 예정일
 
-    private LocalDate returnDate;//반납일
+    private LocalDate returnDate; //반납일
+
+    public boolean isOverdue() { //loan.isOverdue()로 연체여부 확인
+        // 반납일이 있고, 반납일이 예정일보다 늦었으면 연체
+        if (returnDate != null) {
+            return returnDate.isAfter(dueDate);
+        }
+
+        // 아직 반납 안 했는데 오늘이 예정일보다 늦었으면 연체
+        return LocalDate.now().isAfter(dueDate);
+    }
 
 }

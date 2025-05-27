@@ -15,6 +15,9 @@ public enum ErrorCode {
 	USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-001", "해당 유저가 존재하지 않습니다."),
 	DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER-002", "이미 존재하는 이메일입니다."),
 
+	//Loan
+	Loaned_Book(HttpStatus.CONFLICT, "LOAN-001","이미 대출 중인 도서입니다."),
+
 	//DB
 	DB_CONSTRAINT_VIOLATION(HttpStatus.BAD_REQUEST, "COMMON-001", "데이터 무결성 제약조건 위반");
 

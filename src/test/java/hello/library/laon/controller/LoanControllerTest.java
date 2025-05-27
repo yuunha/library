@@ -24,9 +24,10 @@ import hello.library.book.repository.BookRepository;
 import hello.library.loan.dto.LoanRequest;
 import hello.library.loan.entity.Loan;
 import hello.library.loan.repository.LoanRepository;
+import hello.library.loan.service.LoanService;
 import hello.library.user.entity.User;
 import hello.library.user.repository.UserRepository;
-
+import hello.library.user.service.UserService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -49,6 +50,9 @@ public class LoanControllerTest {
 	@Autowired
 	private BookRepository bookRepository;
 
+	@Autowired
+	private LoanService loanService;
+
 	@BeforeEach
 	void clean() {
 		loanRepository.deleteAll();
@@ -56,29 +60,29 @@ public class LoanControllerTest {
 		bookRepository.deleteAll();
 	}
 
-	long registerUser() throws Exception {
+	User registerUser() {
 		User user = User.builder()
 				.username("홍길동")
 				.email("aaa@naver.com")
 			    .build();
-		User savedUser = userRepository.save(user);
-		return savedUser.getUserId();
+
+		return userRepository.save(user);
 	}
 
-	long registerBook() throws Exception {
+	Book registerBook() {
 		Book book = Book.builder()
 			.bookName("채근담")
 			.isbn("11111111")
 			.author("홍자성")
 			.build();
-		Book savedBook = bookRepository.save(book);
-		return savedBook.getBookId();
+
+		return bookRepository.save(book);
 	}
 	@Test
 	@DisplayName("대출 성공")
 	void registerLoan_success() throws Exception {
-		long userId = registerUser();
-		long bookId = registerBook();
+		long userId = registerUser().getUserId();
+		long bookId = registerBook().getBookId();
 
 		LoanRequest request = LoanRequest.builder()
 			.userId(userId)
@@ -96,5 +100,61 @@ public class LoanControllerTest {
 		assertThat(loans.get(0).getBook().getBookName()).isEqualTo("채근담");
 		assertThat(loans.get(0).getBook().getAuthor()).isEqualTo("홍자성");
 		assertThat(loans.get(0).getUser().getUsername()).isEqualTo("홍길동");
+	}
+	@Test
+	@DisplayName("대출 실패 - 존재하지 않는 bookId")
+	void registerLoan_fail1() throws Exception {
+		// given
+		Long userId = registerUser().getUserId();
+		Long unexistBookId = 1L;
+
+		// LoanRequest : userId + 존재하지 않는 bookId
+		LoanRequest request = LoanRequest.builder()
+			.userId(userId)
+			.bookId(unexistBookId)
+			.build();
+
+		// when & then
+		mockMvc.perform(post("/loan")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isNotFound())
+			.andExpect(jsonPath("$.message").value("도서를 찾을 수 없습니다."));
+	}
+
+	@Test
+	@DisplayName("대출 실패 - 대출 불가능한 책(다른사람이 대출중)")
+	void registerLoan_fail2() throws Exception {
+		//given
+		//1. 먼저 user가 대출 등록
+		User user = registerUser();
+		Book book = registerBook();
+		Loan loan = Loan.builder()
+			.user(user)
+			.book(book)
+			.build();
+		loanRepository.save(loan);
+
+		//2. newUser가 같은 책 대출
+		User newUser = User.builder()
+			.username("이이이")
+			.email("bbb@naver.com")
+			.build();
+		userRepository.save(newUser);
+
+		Long newUserId = newUser.getUserId();
+		Long existedBookId = book.getBookId(); // user가 대출한 책 id
+
+		LoanRequest request = LoanRequest.builder()
+				.userId(newUserId)
+			    .bookId(existedBookId)
+				.build();
+
+		//when & then
+		mockMvc.perform(post("/loan")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.message").value("이미 대출 중인 도서입니다."));
 	}
 }
